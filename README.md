@@ -56,3 +56,7 @@ Deploy: push to GitHub → import in Vercel → add the env vars → done.
 
 **v2 (later):** overcharge calculator (needs a verified table of RGB one-year increases), upload-and-interpret
 your rent history, real REC-1 PDF fill. **v3:** organizing layer — design the privacy model first.
+
+## License
+
+MIT — see `LICENSE`. The software license does not make anything here legal advice.
