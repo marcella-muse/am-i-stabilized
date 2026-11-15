@@ -54,10 +54,13 @@ export async function autocompleteAddress(text: string, signal?: AbortSignal): P
     const res = await fetch(`${GEOSEARCH}/autocomplete?text=${encodeURIComponent(text)}`, { signal });
     if (!res.ok) return [];
     // One entry per building: the city lists alternate spellings (B'WAY / BROADWAY) separately.
-    const seen = new Set<string>();
-    return toMatches(await res.json())
-      .filter((m) => (seen.has(m.bbl) ? false : (seen.add(m.bbl), true)))
-      .slice(0, 6);
+    // Keep the fullest spelling of each building's name.
+    const best = new Map<string, AddressMatch>();
+    for (const m of toMatches(await res.json())) {
+      const prev = best.get(m.bbl);
+      if (!prev || m.label.length > prev.label.length) best.set(m.bbl, m);
+    }
+    return [...best.values()].slice(0, 6);
   } catch {
     return [];
   }
