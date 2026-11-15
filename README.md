@@ -29,7 +29,7 @@ Deploy: push to GitHub → import in Vercel → add the env vars → done.
 
 1. **Run your own building through it first.** I couldn't reach the NYC APIs from where this was built,
    so the live lookups are written to the documented endpoints but untested. Expect to fix a field name or two.
-2. **J-51 query** (`lib/nyc.ts → j51Where`): open the dataset page, confirm the borough/block/lot field
+2. **J-51 query**: verified against the live dataset in Nov 2026.
    names, adjust. Until then it fails safe to "Couldn't check."
 3. **Deregulation thresholds** (`lib/engine.ts → DEREG_THRESHOLDS`): the 2015–2019 figure was indexed
    annually; $2,700 is a simplification. Have a tenant lawyer sanity-check the table.

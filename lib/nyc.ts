@@ -53,7 +53,11 @@ export async function autocompleteAddress(text: string, signal?: AbortSignal): P
   try {
     const res = await fetch(`${GEOSEARCH}/autocomplete?text=${encodeURIComponent(text)}`, { signal });
     if (!res.ok) return [];
-    return toMatches(await res.json()).slice(0, 6);
+    // One entry per building: the city lists alternate spellings (B'WAY / BROADWAY) separately.
+    const seen = new Set<string>();
+    return toMatches(await res.json())
+      .filter((m) => (seen.has(m.bbl) ? false : (seen.add(m.bbl), true)))
+      .slice(0, 6);
   } catch {
     return [];
   }
@@ -126,11 +130,10 @@ export async function lookupBuilding(match: AddressMatch): Promise<BuildingRepor
 }
 
 /**
- * The historical J-51 dataset's BBL columns aren't consistently named across
- * exports. VERIFY on first run: open https://data.cityofnewyork.us/d/y7az-s7wc,
- * check the API field names, and adjust. If the query 400s, j51 comes back null
- * (unknown) — never a false "no".
+ * J-51 historical dataset: borough is the field "b", block and lot are unpadded
+ * text (verified Nov 2026). If the query fails, j51 comes back null (unknown),
+ * never a false "no".
  */
 function j51Where(boro: string, block: string, lot: string) {
-  return `borough='${boro}' AND block='${block}' AND lot='${lot}'`;
+  return `b='${boro}' AND block='${block}' AND lot='${lot}'`;
 }
