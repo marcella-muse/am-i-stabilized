@@ -99,3 +99,4 @@ button.ghost, .btn.ghost { background: transparent; color: var(--accent); }
   .masthead, .progress, .nav, button, .btn, .foot { display: none !important; }
   .card { border: 0; }
 }
+.callout a { color: var(--accent); font-weight: 600; }

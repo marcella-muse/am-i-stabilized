@@ -60,3 +60,7 @@ your rent history, real REC-1 PDF fill. **v3:** organizing layer — design the 
 ## License
 
 MIT — see `LICENSE`. The software license does not make anything here legal advice.
+
+## Claude artifact version
+
+`artifact/` builds the same wizard as one self-contained page for hosting as a Claude artifact (`node artifact/build.mjs` → `artifact/dist/index.html`). Artifacts can't call outside sites, so it falls back to the tenant entering year built and unit count from ZoLa, and it writes the plain-English summary through the artifact's built-in Claude access instead of an API key.
