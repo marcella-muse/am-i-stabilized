@@ -100,3 +100,7 @@ button.ghost, .btn.ghost { background: transparent; color: var(--accent); }
   .card { border: 0; }
 }
 .callout a { color: var(--accent); font-weight: 600; }
+.combo { position: relative; flex: 1 1 260px; }
+.suggest { position: absolute; z-index: 10; left: 0; right: 0; top: calc(100% + 4px); list-style: none; margin: 0; padding: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+.suggest li { padding: 9px 10px; border-radius: 6px; cursor: pointer; }
+.suggest li:hover, .suggest li.on { background: color-mix(in srgb, var(--accent) 12%, transparent); }

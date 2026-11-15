@@ -61,6 +61,11 @@ your rent history, real REC-1 PDF fill. **v3:** organizing layer — design the 
 
 MIT — see `LICENSE`. The software license does not make anything here legal advice.
 
-## Claude artifact version
+## Static site (GitHub Pages)
 
-`artifact/` builds the same wizard as one self-contained page for hosting as a Claude artifact (`node artifact/build.mjs` → `artifact/dist/index.html`). Artifacts can't call outside sites, so it falls back to the tenant entering year built and unit count from ZoLa, and it writes the plain-English summary through the artifact's built-in Claude access instead of an API key.
+`web/` builds the wizard as one self-contained page (`npm run build:web` → `web/dist/index.html`) that calls the city's
+address search and NYC Open Data straight from the browser, with suggestions as you type. `.github/workflows/pages.yml`
+runs the tests and publishes it to GitHub Pages on every push to `main`. If the city services are unreachable, the page
+falls back to the tenant entering year built and unit count from ZoLa. The Claude plain-English summary needs a server,
+so it appears only in the Next.js version.
+

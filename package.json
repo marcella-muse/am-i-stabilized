@@ -8,7 +8,7 @@
     "start": "next start",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "build:artifact": "node artifact/build.mjs"
+    "build:web": "node web/build.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.2.0",

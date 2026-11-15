@@ -48,6 +48,26 @@ export function splitBbl(bbl: string) {
   return { boro: bbl.slice(0, 1), block: String(Number(bbl.slice(1, 6))), lot: String(Number(bbl.slice(6, 10))) };
 }
 
+/** As-you-type suggestions (GeoSearch autocomplete). Returns [] on any failure. */
+export async function autocompleteAddress(text: string, signal?: AbortSignal): Promise<AddressMatch[]> {
+  try {
+    const res = await fetch(`${GEOSEARCH}/autocomplete?text=${encodeURIComponent(text)}`, { signal });
+    if (!res.ok) return [];
+    return toMatches(await res.json()).slice(0, 6);
+  } catch {
+    return [];
+  }
+}
+
+function toMatches(data: any): AddressMatch[] {
+  return (data.features ?? [])
+    .map((f: any) => {
+      const pad = f.properties?.addendum?.pad ?? {};
+      return { label: f.properties?.label ?? "", bbl: pad.bbl ?? "", bin: pad.bin ?? null, borough: f.properties?.borough ?? "" } as AddressMatch;
+    })
+    .filter((m: AddressMatch) => /^\d{10}$/.test(m.bbl));
+}
+
 /** Address → candidate BBLs. Returns several candidates, since streets can have more than one name or spelling. */
 export async function searchAddress(text: string): Promise<AddressMatch[]> {
   const url = `${GEOSEARCH}/search?text=${encodeURIComponent(text)}&size=5`;

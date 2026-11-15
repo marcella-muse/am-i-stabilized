@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { evaluate, type BuildingFacts, type TenantAnswers, type Verdict, type Tri } from "../lib/engine";
 import { determinationLetter, rec1Guide, rentHistoryEmail, type TenantInfo } from "../lib/documents";
-import { searchAddress, lookupBuilding, type AddressMatch, type BuildingReport } from "../lib/nyc";
+import { autocompleteAddress, searchAddress, lookupBuilding, type AddressMatch, type BuildingReport } from "../lib/nyc";
 
 type Step = "address" | "building" | "questions" | "result";
 
@@ -31,7 +31,7 @@ export default function App() {
         <p className="eyebrow">NYC tenants · free · nothing is saved</p>
         <h1>Is my apartment rent stabilized?</h1>
         <p className="lede">
-          Enter your address. We'll read the public record, ask you a few things only you know, and explain what it
+          Start typing your address. We'll read the public record, ask you a few things only you know, and explain what it
           adds up to — then draft the letters to find out for sure.
         </p>
         <Disclaimer />
@@ -90,9 +90,41 @@ function AddressStep({ onLoaded }: { onLoaded: (r: BuildingReport) => void }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [manual, setManual] = useState(false);
+  const [suggest, setSuggest] = useState<AddressMatch[]>([]);
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(-1);
+  const picked = useRef(false);
+
+  // Suggestions as you type: wait for a short pause, cancel stale requests.
+  useEffect(() => {
+    if (picked.current) { picked.current = false; return; }
+    if (q.trim().length < 3) { setSuggest([]); return; }
+    const ctl = new AbortController();
+    const t = setTimeout(async () => {
+      const s = await autocompleteAddress(q.trim(), ctl.signal);
+      if (!ctl.signal.aborted) { setSuggest(s); setOpen(true); setActive(-1); }
+    }, 200);
+    return () => { clearTimeout(t); ctl.abort(); };
+  }, [q]);
+
+  function choose(m: AddressMatch) {
+    picked.current = true;
+    setQ(m.label);
+    setOpen(false);
+    pick(m);
+  }
+
+  function onKey(e: React.KeyboardEvent) {
+    if (!open || !suggest.length) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => Math.min(a + 1, suggest.length - 1)); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)); }
+    else if (e.key === "Enter" && active >= 0) { e.preventDefault(); choose(suggest[active]); }
+    else if (e.key === "Escape") setOpen(false);
+  }
 
   async function search(e: React.FormEvent) {
     e.preventDefault();
+    setOpen(false);
     setBusy(true);
     setErr(null);
     try {
@@ -119,12 +151,37 @@ function AddressStep({ onLoaded }: { onLoaded: (r: BuildingReport) => void }) {
     <section className="card">
       <h2>1 · Your building</h2>
       <form onSubmit={search} className="row">
-        <input
-          aria-label="Street address"
-          placeholder="e.g. 123 Example Ave, Brooklyn"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
+        <div className="combo">
+          <input
+            aria-label="Street address"
+            role="combobox"
+            aria-expanded={open && suggest.length > 0}
+            aria-controls="addr-suggest"
+            aria-autocomplete="list"
+            autoComplete="off"
+            placeholder="Start typing your address"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={onKey}
+            onFocus={() => suggest.length && setOpen(true)}
+            onBlur={() => setTimeout(() => setOpen(false), 150)}
+          />
+          {open && suggest.length > 0 && (
+            <ul className="suggest" id="addr-suggest" role="listbox">
+              {suggest.map((m, i) => (
+                <li
+                  key={m.bbl + m.label}
+                  role="option"
+                  aria-selected={i === active}
+                  className={i === active ? "on" : ""}
+                  onMouseDown={(e) => { e.preventDefault(); choose(m); }}
+                >
+                  {m.label}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <button disabled={busy || q.length < 4}>{busy ? "Looking…" : "Look it up"}</button>
       </form>
       <p className="hint">We only use the building address — not your apartment number — to look up public records.</p>
@@ -354,7 +411,7 @@ function ResultStep({
           record points one way — it is not a legal determination.
         </p>
 
-        {ai ? (
+        {!(window as any).claude ? null : ai ? (
           <div className="ai">{ai}</div>
         ) : (
           <button className="ghost" onClick={explain} disabled={aiState === "loading"}>
